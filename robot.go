@@ -27,6 +27,7 @@ type iClient interface {
 	MergePR(owner, repo string, number int32, opt sdk.PullRequestMergePutParam) error
 	ListPROperationLogs(org, repo string, number int32) ([]sdk.OperateLog, error)
 	GetBot() (sdk.User, error)
+	UpdatePullRequest(org, repo string, number int32, param sdk.PullRequestUpdateParam) (sdk.PullRequest, error)
 }
 
 func newRobot(cli iClient, botName string) *robot {
@@ -123,6 +124,18 @@ func (bot *robot) handle(
 
 	if details := checkPRLabel(pr.LabelsToSet(), ops, cfg, log); details != "" {
 		return bot.writeComment(org, repo, number, pr.GetUser().GetLogin(), "\n\n"+details)
+	}
+
+	if pr.GetNeedTest() || pr.GetNeedReview() {
+		v := int32(0)
+		p := sdk.PullRequestUpdateParam{
+			AssigneesNumber: &v,
+			TestersNumber:   &v,
+		}
+
+		if _, err := bot.cli.UpdatePullRequest(org, repo, number, p); err != nil {
+			return err
+		}
 	}
 
 	return bot.cli.MergePR(
