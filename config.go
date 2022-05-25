@@ -14,6 +14,7 @@ type PullRequestMergeType string
 const (
 	MergeMerge  PullRequestMergeType = "merge"
 	MergeSquash PullRequestMergeType = "squash"
+	MergeRebase PullRequestMergeType = "rebase"
 )
 
 type configuration struct {
@@ -85,7 +86,7 @@ func (c *botConfig) setDefault() {
 }
 
 func (c *botConfig) validate() error {
-	if c.MergeMethod != MergeMerge && c.MergeMethod != MergeSquash {
+	if c.MergeMethod != MergeMerge && c.MergeMethod != MergeSquash && c.MergeMethod != MergeRebase {
 		return fmt.Errorf("unsupported merge method:%s", c.MergeMethod)
 	}
 
