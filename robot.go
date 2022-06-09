@@ -141,7 +141,7 @@ func (bot *robot) handle(
 	return bot.cli.MergePR(
 		org, repo, number,
 		sdk.PullRequestMergePutParam{
-			MergeMethod: string(cfg.MergeMethod),
+			MergeMethod: string(cfg.getMergeMethod(pr.GetBase().GetRef())),
 		},
 	)
 }
@@ -149,7 +149,10 @@ func (bot *robot) handle(
 func (bot *robot) writeComment(org, repo string, number int32, prAuthor, c string) error {
 	_ = bot.deleteOldComments(org, repo, number)
 
-	return bot.cli.CreatePRComment(org, repo, number, fmt.Sprintf(tideNotification, prAuthor)+c)
+	return bot.cli.CreatePRComment(
+		org, repo, number,
+		fmt.Sprintf(tideNotification, prAuthor)+c,
+	)
 }
 
 func (bot *robot) deleteOldComments(org, repo string, number int32) error {

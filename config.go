@@ -72,6 +72,9 @@ type botConfig struct {
 	// The default method of merge. Valid options are squash, rebase, and merge.
 	MergeMethod PullRequestMergeType `json:"merge_method,omitempty"`
 
+	// BranchMergeMethod sepecifies the merge method for branches
+	BranchMergeMethod map[string]PullRequestMergeType `json:"branch_merge_method,omitempty"`
+
 	// Labels specifies the ones which a PR must have to be merged.
 	Labels []labelConfig `json:"labels" required:"true"`
 
@@ -86,8 +89,18 @@ func (c *botConfig) setDefault() {
 }
 
 func (c *botConfig) validate() error {
-	if c.MergeMethod != MergeMerge && c.MergeMethod != MergeSquash && c.MergeMethod != MergeRebase {
+	invalidMethod := func(m PullRequestMergeType) bool {
+		return !(m == MergeMerge || m == MergeSquash || m == MergeRebase)
+	}
+
+	if invalidMethod(c.MergeMethod) {
 		return fmt.Errorf("unsupported merge method:%s", c.MergeMethod)
+	}
+
+	for _, m := range c.BranchMergeMethod {
+		if invalidMethod(m) {
+			return fmt.Errorf("unsupported merge method:%s", m)
+		}
 	}
 
 	if len(c.Labels) == 0 {
@@ -107,6 +120,18 @@ func (c *botConfig) validate() error {
 	}
 
 	return c.RepoFilter.Validate()
+}
+
+func (c *botConfig) getMergeMethod(branch string) PullRequestMergeType {
+	if len(c.BranchMergeMethod) == 0 {
+		return c.MergeMethod
+	}
+
+	if m, ok := c.BranchMergeMethod[branch]; ok {
+		return m
+	}
+
+	return c.MergeMethod
 }
 
 type missingLabelConfig struct {
