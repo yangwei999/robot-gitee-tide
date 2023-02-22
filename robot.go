@@ -7,6 +7,7 @@ import (
 	"github.com/opensourceways/community-robot-lib/config"
 	"github.com/opensourceways/community-robot-lib/giteeclient"
 	"github.com/opensourceways/community-robot-lib/robot-gitee-framework"
+	"github.com/opensourceways/community-robot-lib/utils"
 	sdk "github.com/opensourceways/go-gitee/gitee"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -28,6 +29,7 @@ type iClient interface {
 	ListPROperationLogs(org, repo string, number int32) ([]sdk.OperateLog, error)
 	GetBot() (sdk.User, error)
 	UpdatePullRequest(org, repo string, number int32, param sdk.PullRequestUpdateParam) (sdk.PullRequest, error)
+	GetRepoAllBranch(org, repo string) ([]sdk.Branch, error)
 }
 
 func newRobot(cli iClient, botName string) *robot {
@@ -138,12 +140,42 @@ func (bot *robot) handle(
 		}
 	}
 
-	return bot.cli.MergePR(
+	err = bot.cli.MergePR(
 		org, repo, number,
 		sdk.PullRequestMergePutParam{
 			MergeMethod: string(cfg.getMergeMethod(pr.GetBase().GetRef())),
 		},
 	)
+
+	mr := utils.NewMultiErrors()
+	mr.AddError(err)
+
+	if err != nil {
+		content := err.Error()
+		if bot.isBranchProtected(org, repo, pr.GetBase().GetRef()) {
+			content = "Because target branch is protected."
+		}
+
+		err = bot.writeComment(org, repo, number, pr.GetUser().GetLogin(), "\n"+content)
+		mr.AddError(err)
+	}
+
+	return mr.Err()
+}
+
+func (bot *robot) isBranchProtected(org, repo, branchName string) bool {
+	branches, err := bot.cli.GetRepoAllBranch(org, repo)
+	if err != nil {
+		return false
+	}
+
+	for _, branch := range branches {
+		if branch.Name == branchName {
+			return branch.Protected
+		}
+	}
+
+	return false
 }
 
 func (bot *robot) writeComment(org, repo string, number int32, prAuthor, c string) error {
