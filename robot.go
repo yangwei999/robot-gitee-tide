@@ -127,8 +127,20 @@ func (bot *robot) handle(
 	}
 
 	if pr.GetNeedTest() || pr.GetNeedReview() {
-		return bot.writeComment(org, repo, number, pr.GetUser().GetLogin(), "\n\n"+
-			"Review or test is not passed.")
+		if cfg.CheckReviewAndTest {
+			return bot.writeComment(org, repo, number, pr.GetUser().GetLogin(), "\n\n"+
+				"Review or test is not passed")
+		} else {
+			v := int32(0)
+			p := sdk.PullRequestUpdateParam{
+				AssigneesNumber: &v,
+				TestersNumber:   &v,
+			}
+
+			if _, err := bot.cli.UpdatePullRequest(org, repo, number, p); err != nil {
+				return err
+			}
+		}
 	}
 
 	return bot.cli.MergePR(
