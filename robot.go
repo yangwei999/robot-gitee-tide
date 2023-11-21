@@ -126,7 +126,7 @@ func (bot *robot) handle(
 		return bot.writeComment(org, repo, number, pr.GetUser().GetLogin(), "\n\n"+details)
 	}
 
-	if pr.GetNeedTest() || pr.GetNeedReview() {
+	if !cfg.KeepReviewAndTest && (pr.GetNeedTest() || pr.GetNeedReview()) {
 		v := int32(0)
 		p := sdk.PullRequestUpdateParam{
 			AssigneesNumber: &v,

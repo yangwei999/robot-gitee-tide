@@ -80,6 +80,9 @@ type botConfig struct {
 
 	// MissingLabels specifies the ones which a PR must not have to be merged.
 	MissingLabels []missingLabelConfig `json:"missing_labels,omitempty"`
+
+	// KeepReviewAndTest whether to check review and test before merge pr.
+	KeepReviewAndTest bool `json:"keep_review_and_test,omitempty"`
 }
 
 func (c *botConfig) setDefault() {
