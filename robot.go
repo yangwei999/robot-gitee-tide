@@ -111,7 +111,7 @@ func (bot *robot) handle(
 		return err
 	}
 
-	bot.setTestersNumber(cfg, pr, org, repo)
+	bot.setTestersNumber(cfg, pr, org, repo, log)
 
 	if preCheck != nil && !preCheck(pr.LabelsToSet(), cfg) {
 		return nil
@@ -169,16 +169,16 @@ func (bot *robot) deleteOldComments(org, repo string, number int32) error {
 	return nil
 }
 
-func (bot *robot) setTestersNumber(cfg *botConfig, pr *sdk.PullRequestHook, org, repo string) {
-	logrus.Infof("exec set tester num")
+func (bot *robot) setTestersNumber(cfg *botConfig, pr *sdk.PullRequestHook, org, repo string, log *logrus.Entry) {
+	log.Infof("exec set tester num")
 	if !cfg.KeepReviewAndTest || pr.Additions <= 100 || pr.NeedTest {
-		logrus.Infoln(cfg.KeepReviewAndTest, pr.Additions, pr.NeedTest)
+		log.Infoln(cfg.KeepReviewAndTest, pr.Additions, pr.NeedTest)
 		return
 	}
 
 	match, err := regexp.MatchString(`^r\d+\.\d+(\.\d+)?$`, pr.Base.Ref)
 	if err != nil {
-		logrus.Errorf("branches %s don't match:%s", pr.Base.Ref, err.Error())
+		log.Errorf("branches %s don't match:%s", pr.Base.Ref, err.Error())
 
 		return
 	}
@@ -191,7 +191,7 @@ func (bot *robot) setTestersNumber(cfg *botConfig, pr *sdk.PullRequestHook, org,
 
 		_, err := bot.cli.UpdatePullRequest(org, repo, pr.Number, p)
 		if err != nil {
-			logrus.Errorf("error update :%s", err.Error())
+			log.Errorf("error update :%s", err.Error())
 
 			return
 		}
