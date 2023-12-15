@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"regexp"
 
-	"fmt"
 	"github.com/opensourceways/community-robot-lib/config"
 	"github.com/opensourceways/community-robot-lib/giteeclient"
 	"github.com/opensourceways/community-robot-lib/robot-gitee-framework"
@@ -170,7 +170,9 @@ func (bot *robot) deleteOldComments(org, repo string, number int32) error {
 }
 
 func (bot *robot) setTestersNumber(cfg *botConfig, pr *sdk.PullRequestHook, org, repo string) {
+	logrus.Infof("exec set tester num")
 	if !cfg.KeepReviewAndTest || pr.Additions <= 100 || pr.NeedTest {
+		logrus.Infoln(cfg.KeepReviewAndTest, pr.Additions, pr.NeedTest)
 		return
 	}
 
