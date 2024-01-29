@@ -138,12 +138,17 @@ func (bot *robot) handle(
 		}
 	}
 
-	return bot.cli.MergePR(
+	err = bot.cli.MergePR(
 		org, repo, number,
 		sdk.PullRequestMergePutParam{
 			MergeMethod: string(cfg.getMergeMethod(pr.GetBase().GetRef())),
 		},
 	)
+	if err != nil {
+		return bot.writeComment(org, repo, number, pr.GetUser().GetLogin(), "\n\n"+err.Error())
+	}
+
+	return nil
 }
 
 func (bot *robot) writeComment(org, repo string, number int32, prAuthor, c string) error {
