@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/opensourceways/community-robot-lib/config"
 	"github.com/opensourceways/community-robot-lib/giteeclient"
@@ -12,7 +13,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
-const botName = "tide"
+const (
+	botName         = "tide"
+	conflictKeyword = "there are conflicting files"
+)
 
 var (
 	checkPRRe          = regexp.MustCompile(`(?mi)^/check-pr\s*$`)
@@ -144,11 +148,11 @@ func (bot *robot) handle(
 			MergeMethod: string(cfg.getMergeMethod(pr.GetBase().GetRef())),
 		},
 	)
-	if err != nil {
+	if err != nil && strings.Contains(err.Error(), conflictKeyword) {
 		return bot.writeComment(org, repo, number, pr.GetUser().GetLogin(), "\n\n"+err.Error())
 	}
 
-	return nil
+	return err
 }
 
 func (bot *robot) writeComment(org, repo string, number int32, prAuthor, c string) error {
