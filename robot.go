@@ -149,7 +149,7 @@ func (bot *robot) handle(
 		},
 	)
 	if err != nil && strings.Contains(err.Error(), conflictKeyword) {
-		return bot.writeComment(org, repo, number, pr.GetUser().GetLogin(), "\n\n"+err.Error())
+		bot.writeComment(org, repo, number, pr.GetUser().GetLogin(), "\n\n"+err.Error())
 	}
 
 	return err
